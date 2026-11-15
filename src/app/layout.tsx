@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import ErrorBoundary from '@/components/ErrorBoundary';
+import PwaUpdateWatcher from '@/components/PwaUpdateWatcher';
 import "./globals.css";
 
 const SITE_URL = "https://osirisai.live";
@@ -200,6 +201,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ErrorBoundary name="OSIRIS Core">
           {children}
+          <PwaUpdateWatcher />
         </ErrorBoundary>
       </body>
     </html>
