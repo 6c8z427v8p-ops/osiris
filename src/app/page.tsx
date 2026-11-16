@@ -228,6 +228,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', place);
   }, [showMarkets]);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showUkraineFilters, setShowUkraineFilters] = useState(false);
   const [showSpaceCam, setShowSpaceCam] = useState(false);
   const [showScmPanel, setShowScmPanel] = useState(true);
   const [showIntel, setShowIntel] = useState(false);
@@ -1433,6 +1434,15 @@ export default function Dashboard() {
           <MapPinned className="h-4 w-4" aria-hidden="true" />
           Украина
         </button>
+        <button
+          type="button"
+          onClick={() => setShowUkraineFilters(v => !v)}
+          aria-expanded={showUkraineFilters}
+          aria-controls="ukraine-map-filters"
+          className="inline-flex items-center rounded-xl border border-amber-400/50 bg-[#15151d]/95 px-3 py-2.5 text-xs font-semibold text-amber-200 shadow-lg backdrop-blur-md hover:bg-[#29251a]"
+        >
+          Слои
+        </button>
         <a
           href="/ukraine"
           aria-label="Открыть подробный мониторинг Украины"
@@ -1441,6 +1451,27 @@ export default function Dashboard() {
           Обзор ↗
         </a>
       </div>
+      {showUkraineFilters && (
+        <section id="ukraine-map-filters" aria-label="Фильтры событий Украины" className="fixed z-[91] left-3 bottom-[calc(env(safe-area-inset-bottom)+132px)] md:bottom-20 w-[min(340px,calc(100vw-24px))] max-h-[60vh] overflow-y-auto rounded-xl border border-amber-400/40 bg-[#10121b]/95 p-4 text-white shadow-xl backdrop-blur-lg">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-amber-200">Украина · слои карты</h2>
+            <button type="button" onClick={() => setShowUkraineFilters(false)} aria-label="Закрыть фильтры" className="rounded p-1 text-white/80"><X className="h-4 w-4" /></button>
+          </div>
+          <p className="my-3 text-xs leading-relaxed text-white/70">Эти переключатели управляют существующими глобальными слоями OSIRIS. Они не ограничивают события границами Украины и не показывают линию фронта в реальном времени.</p>
+          {([
+            ['war_alerts', 'Военные оповещения'],
+            ['alert_pins', 'Новости с геометками'],
+            ['gdelt_events', 'События GDELT'],
+            ['global_incidents', 'Глобальные инциденты'],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex cursor-pointer items-center justify-between gap-3 border-t border-white/10 py-3 text-sm">
+              <span>{label}</span>
+              <input type="checkbox" checked={activeLayers[key]} onChange={e => setActiveLayers(prev => ({ ...prev, [key]: e.target.checked }))} className="h-5 w-5 accent-amber-400" />
+            </label>
+          ))}
+          <a href="/ukraine" className="mt-2 block rounded-lg border border-amber-400/40 px-3 py-2 text-center text-sm text-amber-200">Источники, гуманитарные отчёты и история ↗</a>
+        </section>
+      )}
 
 
       {/* ── SPLASH ── */}
