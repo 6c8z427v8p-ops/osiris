@@ -229,7 +229,7 @@ export default function Dashboard() {
   }, [showMarkets]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showUkraineFilters, setShowUkraineFilters] = useState(false);
-  const [showZKomitetMap, setShowZKomitetMap] = useState(false);
+  const [frontImportStatus, setFrontImportStatus] = useState('');
   const [showSpaceCam, setShowSpaceCam] = useState(false);
   const [showScmPanel, setShowScmPanel] = useState(true);
   const [showIntel, setShowIntel] = useState(false);
@@ -1444,14 +1444,6 @@ export default function Dashboard() {
         >
           Слои
         </button>
-        <button
-          type="button"
-          onClick={() => setShowZKomitetMap(true)}
-          aria-label="Открыть карту линии фронта Z комитета"
-          className="inline-flex items-center rounded-xl border border-amber-400/50 bg-[#15151d]/95 px-3 py-2.5 text-xs font-semibold text-amber-200 shadow-lg backdrop-blur-md hover:bg-[#29251a]"
-        >
-          Фронт ↗
-        </button>
         <a
           href="/ukraine"
           aria-label="Открыть подробный мониторинг Украины"
@@ -1478,33 +1470,42 @@ export default function Dashboard() {
               <input type="checkbox" checked={activeLayers[key]} onChange={e => setActiveLayers(prev => ({ ...prev, [key]: e.target.checked }))} className="h-5 w-5 accent-amber-400" />
             </label>
           ))}
+          <div className="border-t border-white/15 pt-3">
+            <h3 className="text-sm font-semibold text-amber-200">Линия фронта на карте</h3>
+            <p className="my-2 text-xs leading-relaxed text-white/70">Загрузите GeoJSON с линией фронта, полученный с разрешения владельца данных. Файл отобразится прямо на карте OSIRIS. Публичный GeoJSON Z комитета пока не подтверждён.</p>
+            <label className="block cursor-pointer rounded-lg border border-amber-400/50 px-3 py-2 text-center text-sm text-amber-200">
+              Загрузить GeoJSON
+              <input type="file" accept=".geojson,.json,application/geo+json,application/json" className="sr-only" onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 10 * 1024 * 1024) { setFrontImportStatus('Файл слишком большой (максимум 10 МБ).'); return; }
+                try {
+                  const parsed: unknown = JSON.parse(await file.text());
+                  if (!parsed || typeof parsed !== 'object') throw new Error('Некорректный GeoJSON');
+                  const obj = parsed as { type?: string; features?: unknown[]; geometry?: unknown };
+                  if (obj.type !== 'FeatureCollection' && obj.type !== 'Feature') throw new Error('Нужен GeoJSON FeatureCollection или Feature');
+                  if (obj.type === 'FeatureCollection' && (!Array.isArray(obj.features) || obj.features.length > 10000)) throw new Error('Некорректный набор объектов');
+                  const featureCollection = obj.type === 'Feature' ? { type: 'FeatureCollection', features: [obj] } : obj;
+                  const features = featureCollection.features as Array<{ geometry?: { type?: string; coordinates?: unknown } }>;
+                  if (!features.length || features.some(feature => !feature?.geometry || !['LineString', 'MultiLineString'].includes(feature.geometry.type || '') || !Array.isArray(feature.geometry.coordinates))) throw new Error('Нужны линии LineString/MultiLineString, без точек и полигонов');
+                  setArcgisLayers(prev => [...prev.filter(layer => layer.id !== 'ukraine-front-import'), { id: 'ukraine-front-import', title: 'Украина — импортированная линия фронта', url: '', geojson: featureCollection, color: '#ff4747', visible: true, opacity: 0.95 }]);
+                  setFrontImportStatus('Линия добавлена на карту из файла: ' + file.name + '. Дата и источник должны быть проверены отдельно.');
+                  setFlyToLocation({ lat: 49, lng: 31, zoom: 5.1, ts: Date.now() });
+                } catch (error) {
+                  setFrontImportStatus(error instanceof Error ? error.message : 'Не удалось прочитать файл.');
+                }
+                e.target.value = '';
+              }} />
+            </label>
+            {frontImportStatus && <p role="status" className="mt-2 text-xs text-white/80">{frontImportStatus}</p>}
+            {arcgisLayers.some(layer => layer.id === 'ukraine-front-import') && (
+              <button type="button" onClick={() => { setArcgisLayers(prev => prev.filter(layer => layer.id !== 'ukraine-front-import')); setFrontImportStatus('Импортированная линия удалена.'); }} className="mt-2 w-full rounded-lg border border-white/30 px-3 py-2 text-xs">Убрать линию с карты</button>
+            )}
+          </div>
           <a href="/ukraine" className="mt-2 block rounded-lg border border-amber-400/40 px-3 py-2 text-center text-sm text-amber-200">Источники, гуманитарные отчёты и история ↗</a>
         </section>
       )}
 
-
-      {showZKomitetMap && (
-        <section role="dialog" aria-modal="true" aria-label="Публичная карта Z комитета" className="fixed inset-0 z-[950] flex flex-col bg-[#090a10] text-white">
-          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 px-3 py-3 pt-[max(12px,env(safe-area-inset-top))]">
-            <div>
-              <h2 className="text-sm font-semibold text-amber-200">Украина · карта Z комитета</h2>
-              <p className="text-[11px] text-white/60">Сторонняя карта · оценки авторов, возможна задержка</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <a href="https://паблик.карта-сво.рф/free/" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-amber-400/40 px-3 py-2 text-xs text-amber-200">Открыть отдельно ↗</a>
-              <button type="button" onClick={() => setShowZKomitetMap(false)} aria-label="Закрыть карту Z комитета" className="rounded-lg border border-white/30 p-2"><X className="h-4 w-4" /></button>
-            </div>
-          </header>
-          <p className="border-b border-white/10 px-3 py-2 text-[11px] leading-relaxed text-white/65">Встроенная страница может не загрузиться, если сайт запрещает встраивание. Тогда нажмите «Открыть отдельно». Это не географический слой OSIRIS; дата и достоверность линии определяются источником.</p>
-          <iframe
-            title="Публичная карта линии фронта — Z комитет"
-            src="https://паблик.карта-сво.рф/free/"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="min-h-0 w-full flex-1 border-0 bg-[#11131b]"
-          />
-        </section>
-      )}
 
       {/* ── SPLASH ── */}
       <AnimatePresence onExitComplete={() => setSplashGone(true)}>
