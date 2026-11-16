@@ -359,6 +359,26 @@ export default function Dashboard() {
   const [showRemote, setShowRemote] = useState(false);
   const [showArcGIS, setShowArcGIS] = useState(false);
   const [showUkraineSectorMarkers, setShowUkraineSectorMarkers] = useState(false);
+  const editingFrontRef = useRef(false);
+  const [editingFront, setEditingFront] = useState(false);
+  const [customFrontVisible, setCustomFrontVisible] = useState(true);
+  const [customFront, setCustomFront] = useState<{ type: 'FeatureCollection'; features: any[] } | null>(null);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('osiris-custom-front-v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.type === 'FeatureCollection' && Array.isArray(parsed.features)) setCustomFront(parsed);
+      }
+    } catch { /* ignore invalid saved data */ }
+  }, []);
+  useEffect(() => {
+    setArcgisLayers(prev => {
+      const rest = prev.filter(layer => layer.id !== 'custom-ukraine-front');
+      if (!customFront || !customFrontVisible) return rest;
+      return [...rest, { id: 'custom-ukraine-front', title: 'Моя линия фронта · ручная редакция', url: '', geojson: customFront, color: '#ffde59', visible: true, opacity: 1 }];
+    });
+  }, [customFront, customFrontVisible]);
   const [publicFrontEnabled, setPublicFrontEnabled] = useState(false);
   const [publicFrontStatus, setPublicFrontStatus] = useState('');
   const [arcgisLayers, setArcgisLayers] = useState<Array<{ id: string; title: string; url: string; geojson: any; color: string; visible: boolean; opacity: number }>>([]);
@@ -991,6 +1011,20 @@ export default function Dashboard() {
   }, []);
 
   const handleDrawComplete = useCallback((result: DrawResult) => {
+    if (editingFrontRef.current) {
+      editingFrontRef.current = false;
+      setEditingFront(false);
+      setDrawMode(null);
+      setDrawProgress(null);
+      const coordinates = result.coords as [number, number][];
+      if (coordinates.length >= 2) {
+        const collection = { type: 'FeatureCollection' as const, features: [{ type: 'Feature', properties: { name: 'Моя линия фронта', source: 'Ручная редакция пользователя', updated_at: new Date().toISOString() }, geometry: { type: 'LineString', coordinates } }] };
+        setCustomFront(collection);
+        setCustomFrontVisible(true);
+        try { window.localStorage.setItem('osiris-custom-front-v1', JSON.stringify(collection)); } catch { /* storage unavailable */ }
+      }
+      return;
+    }
     if (lidarStore.get().drawing) {
       lidarCompleteDraw(result);
       setDrawMode(null);
@@ -1474,6 +1508,30 @@ export default function Dashboard() {
             </label>
           ))}
           <div className="border-t border-white/15 py-3">
+            <h3 className="text-sm font-semibold text-amber-200">Моя линия фронта · редактор</h3>
+            <p className="my-2 text-xs leading-relaxed text-white/70">Нарисуйте свою версию линии прямо на карте. Она будет жёлтой, отдельно от открытого источника, и сохранится в браузере этого устройства. Ручная оценка, не подтверждённые данные.</p>
+            {!editingFront ? (
+              <button type="button" onClick={() => {
+                editingFrontRef.current = true;
+                setEditingFront(true);
+                setShowUkraineFilters(false);
+                setDrawProgress(null);
+                setDrawMode('line');
+              }} className="w-full rounded-lg border border-amber-400/60 px-3 py-2 text-sm text-amber-200">Нарисовать / заменить мою линию</button>
+            ) : (
+              <button type="button" onClick={() => { editingFrontRef.current = false; setEditingFront(false); setDrawMode(null); setDrawProgress(null); }} className="w-full rounded-lg border border-white/30 px-3 py-2 text-sm">Отменить рисование</button>
+            )}
+            {customFront && (
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={customFrontVisible} onChange={e => setCustomFrontVisible(e.target.checked)} /> Показывать мою линию</label>
+                <button type="button" onClick={() => {
+                  setCustomFront(null);
+                  try { window.localStorage.removeItem('osiris-custom-front-v1'); } catch { /* storage unavailable */ }
+                }} className="rounded border border-white/30 px-2 py-1 text-xs">Удалить</button>
+              </div>
+            )}
+          </div>
+          <div className="border-t border-white/15 py-3">
             <label className="flex cursor-pointer items-center justify-between gap-3 text-sm">
               <span>Линия фронта · открытые данные</span>
               <input type="checkbox" checked={publicFrontEnabled} onChange={async e => {
@@ -1575,6 +1633,17 @@ export default function Dashboard() {
       )}
 
 
+      {editingFront && (
+        <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+150px)] left-3 z-[200] flex max-w-[calc(100vw-24px)] flex-col gap-2 rounded-xl border border-amber-400/60 bg-[#10121b]/95 p-3 text-xs text-white shadow-xl">
+          <strong className="text-amber-200">Редактор линии фронта</strong>
+          <span>Нажимайте на карту, чтобы добавить точки. Завершите линию после двух точек.</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => sendDraw('undo')} className="rounded border border-white/30 px-3 py-2">Назад</button>
+            <button type="button" onClick={() => sendDraw('finish')} className="rounded border border-amber-400/60 px-3 py-2 text-amber-200">Сохранить линию</button>
+            <button type="button" onClick={() => { sendDraw('cancel'); editingFrontRef.current = false; setEditingFront(false); setDrawMode(null); }} className="rounded border border-white/30 px-3 py-2">Отмена</button>
+          </div>
+        </div>
+      )}
       {/* ── SPLASH ── */}
       <AnimatePresence onExitComplete={() => setSplashGone(true)}>
         {showSplash && (
