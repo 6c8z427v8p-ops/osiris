@@ -358,6 +358,7 @@ export default function Dashboard() {
   }, [navSession]);
   const [showRemote, setShowRemote] = useState(false);
   const [showArcGIS, setShowArcGIS] = useState(false);
+  const [showUkraineSectorMarkers, setShowUkraineSectorMarkers] = useState(false);
   const [arcgisLayers, setArcgisLayers] = useState<Array<{ id: string; title: string; url: string; geojson: any; color: string; visible: boolean; opacity: number }>>([]);
   /* What Live Transit can see right now, for its row in the layer panel. */
   const [transitStatus, setTransitStatus] = useState<TransitStatus | null>(null);
@@ -1470,6 +1471,33 @@ export default function Dashboard() {
               <input type="checkbox" checked={activeLayers[key]} onChange={e => setActiveLayers(prev => ({ ...prev, [key]: e.target.checked }))} className="h-5 w-5 accent-amber-400" />
             </label>
           ))}
+          <div className="border-t border-white/15 py-3">
+            <label className="flex cursor-pointer items-center justify-between gap-3 text-sm">
+              <span>4 участка со скриншотов · ориентиры</span>
+              <input type="checkbox" checked={showUkraineSectorMarkers} onChange={e => {
+                const enabled = e.target.checked;
+                setShowUkraineSectorMarkers(enabled);
+                setArcgisLayers(prev => {
+                  const rest = prev.filter(layer => layer.id !== 'ukraine-screenshot-sectors');
+                  if (!enabled) return rest;
+                  return [...rest, {
+                    id: 'ukraine-screenshot-sectors',
+                    title: 'Участки по скриншотам — приблизительные центры',
+                    url: '',
+                    geojson: { type: 'FeatureCollection', features: [
+                      { type: 'Feature', properties: { name: 'Запорожское направление', source: 'Скриншот 16.11.2026', precision: 'приблизительный центр участка' }, geometry: { type: 'Point', coordinates: [35.75, 47.68] } },
+                      { type: 'Feature', properties: { name: 'Очеретинский участок', source: 'Скриншот 16.11.2026', precision: 'приблизительный центр участка' }, geometry: { type: 'Point', coordinates: [37.19, 48.36] } },
+                      { type: 'Feature', properties: { name: 'Добропольский участок', source: 'Скриншот 12.11.2026', precision: 'приблизительный центр участка' }, geometry: { type: 'Point', coordinates: [37.10, 48.47] } },
+                      { type: 'Feature', properties: { name: 'Днепропетровский участок', source: 'Скриншот 11.11.2026', precision: 'приблизительный центр участка' }, geometry: { type: 'Point', coordinates: [36.95, 48.24] } },
+                    ] },
+                    color: '#ff6b6b', visible: true, opacity: 0.9,
+                  }];
+                });
+                if (enabled) setFlyToLocation({ lat: 48.0, lng: 36.5, zoom: 7, ts: Date.now() });
+              }} className="h-5 w-5 accent-amber-400" />
+            </label>
+            <p className="mt-2 text-xs leading-relaxed text-white/65">На карте появятся четыре ориентировочных маркера участков, не линия соприкосновения и не границы контроля. Центры определены приблизительно по названиям населённых пунктов на присланных снимках; даты снимков — 11–16.11.2026.</p>
+          </div>
           <div className="border-t border-white/15 pt-3">
             <h3 className="text-sm font-semibold text-amber-200">Линия фронта на карте</h3>
             <p className="my-2 text-xs leading-relaxed text-white/70">Загрузите GeoJSON с линией фронта, полученный с разрешения владельца данных. Файл отобразится прямо на карте OSIRIS. Публичный GeoJSON Z комитета пока не подтверждён.</p>
