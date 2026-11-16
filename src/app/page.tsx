@@ -359,6 +359,8 @@ export default function Dashboard() {
   const [showRemote, setShowRemote] = useState(false);
   const [showArcGIS, setShowArcGIS] = useState(false);
   const [showUkraineSectorMarkers, setShowUkraineSectorMarkers] = useState(false);
+  const [publicFrontEnabled, setPublicFrontEnabled] = useState(false);
+  const [publicFrontStatus, setPublicFrontStatus] = useState('');
   const [arcgisLayers, setArcgisLayers] = useState<Array<{ id: string; title: string; url: string; geojson: any; color: string; visible: boolean; opacity: number }>>([]);
   /* What Live Transit can see right now, for its row in the layer panel. */
   const [transitStatus, setTransitStatus] = useState<TransitStatus | null>(null);
@@ -1471,6 +1473,44 @@ export default function Dashboard() {
               <input type="checkbox" checked={activeLayers[key]} onChange={e => setActiveLayers(prev => ({ ...prev, [key]: e.target.checked }))} className="h-5 w-5 accent-amber-400" />
             </label>
           ))}
+          <div className="border-t border-white/15 py-3">
+            <label className="flex cursor-pointer items-center justify-between gap-3 text-sm">
+              <span>Линия фронта · открытые данные</span>
+              <input type="checkbox" checked={publicFrontEnabled} onChange={async e => {
+                const enabled = e.target.checked;
+                setPublicFrontEnabled(enabled);
+                if (!enabled) {
+                  setArcgisLayers(prev => prev.filter(layer => !layer.id.startsWith('public-ukraine-front-')));
+                  setPublicFrontStatus('Слой выключен.');
+                  return;
+                }
+                setPublicFrontStatus('Загружаю открытые геоданные…');
+                try {
+                  const response = await fetch('https://longlinecode.github.io/russo-ukrainian-front-daily/data/latest.geojson', { cache: 'no-store' });
+                  if (!response.ok) throw new Error('Источник недоступен: HTTP ' + response.status);
+                  const data = await response.json();
+                  if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features)) throw new Error('Некорректный формат GeoJSON');
+                  const lineFeatures = data.features.filter((feature: any) => feature?.properties?.kind === 'contact_line' && ['LineString', 'MultiLineString'].includes(feature?.geometry?.type));
+                  const areaFeatures = data.features.filter((feature: any) => feature?.properties?.kind === 'russian_control' && ['Polygon', 'MultiPolygon'].includes(feature?.geometry?.type));
+                  if (!lineFeatures.length) throw new Error('В источнике нет геометрии линии соприкосновения');
+                  setArcgisLayers(prev => [...prev.filter(layer => !layer.id.startsWith('public-ukraine-front-')), {
+                    id: 'public-ukraine-front-line', title: 'Линия соприкосновения · DeepStateMap (производный набор)', url: 'https://github.com/longlinecode/russo-ukrainian-front-daily', geojson: { type: 'FeatureCollection', features: lineFeatures }, color: '#ff445c', visible: true, opacity: 0.95,
+                  }, ...(areaFeatures.length ? [{
+                    id: 'public-ukraine-front-area', title: 'Оценка контроля территорий · DeepStateMap', url: 'https://github.com/longlinecode/russo-ukrainian-front-daily', geojson: { type: 'FeatureCollection', features: areaFeatures }, color: '#a93249', visible: true, opacity: 0.28,
+                  }] : [])]);
+                  const date = typeof data.properties?.data_date === 'string' ? data.properties.data_date : 'не указана';
+                  setPublicFrontStatus('Загружено. Дата данных: ' + date + '. Оценка источника, не оперативная информация. Обновляется при повторном включении слоя.');
+                  setFlyToLocation({ lat: 48.6, lng: 36.7, zoom: 6.2, ts: Date.now() });
+                } catch (err) {
+                  setPublicFrontEnabled(false);
+                  setPublicFrontStatus(err instanceof Error ? err.message : 'Ошибка загрузки');
+                }
+              }} className="h-5 w-5 accent-amber-400" />
+            </label>
+            <p className="mt-2 text-xs leading-relaxed text-white/65">Линия и полупрозрачная оценка территорий из открытого GeoJSON, производного от DeepStateMap/ISW. Не Z комитет. Данные могут запаздывать и отличаться от других карт.</p>
+            {publicFrontStatus && <p role="status" className="mt-2 text-xs text-amber-200">{publicFrontStatus}</p>}
+            <a href="https://github.com/longlinecode/russo-ukrainian-front-daily" target="_blank" rel="noopener noreferrer" className="text-xs text-amber-200 underline">Источник и методика ↗</a>
+          </div>
           <div className="border-t border-white/15 py-3">
             <label className="flex cursor-pointer items-center justify-between gap-3 text-sm">
               <span>4 участка со скриншотов · ориентиры</span>
