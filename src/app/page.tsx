@@ -229,6 +229,7 @@ export default function Dashboard() {
   }, [showMarkets]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showUkraineFilters, setShowUkraineFilters] = useState(false);
+  const [showZKomitetMap, setShowZKomitetMap] = useState(false);
   const [showSpaceCam, setShowSpaceCam] = useState(false);
   const [showScmPanel, setShowScmPanel] = useState(true);
   const [showIntel, setShowIntel] = useState(false);
@@ -1443,6 +1444,14 @@ export default function Dashboard() {
         >
           Слои
         </button>
+        <button
+          type="button"
+          onClick={() => setShowZKomitetMap(true)}
+          aria-label="Открыть карту линии фронта Z комитета"
+          className="inline-flex items-center rounded-xl border border-amber-400/50 bg-[#15151d]/95 px-3 py-2.5 text-xs font-semibold text-amber-200 shadow-lg backdrop-blur-md hover:bg-[#29251a]"
+        >
+          Фронт ↗
+        </button>
         <a
           href="/ukraine"
           aria-label="Открыть подробный мониторинг Украины"
@@ -1473,6 +1482,29 @@ export default function Dashboard() {
         </section>
       )}
 
+
+      {showZKomitetMap && (
+        <section role="dialog" aria-modal="true" aria-label="Публичная карта Z комитета" className="fixed inset-0 z-[950] flex flex-col bg-[#090a10] text-white">
+          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 px-3 py-3 pt-[max(12px,env(safe-area-inset-top))]">
+            <div>
+              <h2 className="text-sm font-semibold text-amber-200">Украина · карта Z комитета</h2>
+              <p className="text-[11px] text-white/60">Сторонняя карта · оценки авторов, возможна задержка</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="https://паблик.карта-сво.рф/free/" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-amber-400/40 px-3 py-2 text-xs text-amber-200">Открыть отдельно ↗</a>
+              <button type="button" onClick={() => setShowZKomitetMap(false)} aria-label="Закрыть карту Z комитета" className="rounded-lg border border-white/30 p-2"><X className="h-4 w-4" /></button>
+            </div>
+          </header>
+          <p className="border-b border-white/10 px-3 py-2 text-[11px] leading-relaxed text-white/65">Встроенная страница может не загрузиться, если сайт запрещает встраивание. Тогда нажмите «Открыть отдельно». Это не географический слой OSIRIS; дата и достоверность линии определяются источником.</p>
+          <iframe
+            title="Публичная карта линии фронта — Z комитет"
+            src="https://паблик.карта-сво.рф/free/"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            className="min-h-0 w-full flex-1 border-0 bg-[#11131b]"
+          />
+        </section>
+      )}
 
       {/* ── SPLASH ── */}
       <AnimatePresence onExitComplete={() => setSplashGone(true)}>
