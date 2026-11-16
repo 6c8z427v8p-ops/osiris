@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import UkraineLayers from '@/components/UkraineLayers';
 
 export const metadata: Metadata = {
   title: 'Украина — мониторинг конфликта | OSIRIS',
@@ -24,7 +25,8 @@ export default function UkraineConflictPage() {
           <strong style={{ color: '#f2d184' }}>Важно о точности</strong>
           <p style={{ marginBottom: 0, lineHeight: 1.6, color: '#d5d0c5' }}>Это не оперативная карта боевых действий и не система предупреждения об опасности. Данные могут поступать с задержкой, сообщения могут быть неполными или неподтверждёнными. Отсутствие отметок не означает безопасность. Линия контроля территорий зависит от даты и методики источника.</p>
         </section>
-        <h2 style={{ fontSize: 21, margin: '30px 0 16px' }}>Источники мониторинга</h2>
+        <UkraineLayers />
+        <h2 style={{ fontSize: 21, margin: '30px 0 16px' }}>Все основные источники</h2>
         <div style={{ display: 'grid', gap: 12 }}>
           {sources.map(source => (
             <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', color: 'inherit', textDecoration: 'none', background: '#10121a', border: '1px solid #303340', borderRadius: 14, padding: 18 }}>
