@@ -1418,6 +1418,16 @@ export default function Dashboard() {
 
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
+      {/* Quick access to the Ukraine regional overview; works on iPhone and desktop. */}
+      <a
+        href="/ukraine"
+        aria-label="Открыть мониторинг конфликта в Украине"
+        className="fixed z-[90] left-3 bottom-[calc(env(safe-area-inset-bottom)+76px)] md:bottom-5 md:left-5 inline-flex items-center gap-2 rounded-xl border border-amber-400/50 bg-[#15151d]/95 px-3 py-2.5 text-xs font-semibold text-amber-200 shadow-lg backdrop-blur-md hover:bg-[#29251a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+      >
+        <MapPinned className="h-4 w-4" aria-hidden="true" />
+        Украина
+      </a>
+
 
       {/* ── SPLASH ── */}
       <AnimatePresence onExitComplete={() => setSplashGone(true)}>
