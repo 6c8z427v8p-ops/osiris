@@ -25,6 +25,13 @@ export default function UkraineConflictPage() {
           <strong style={{ color: '#f2d184' }}>Важно о точности</strong>
           <p style={{ marginBottom: 0, lineHeight: 1.6, color: '#d5d0c5' }}>Это не оперативная карта боевых действий и не система предупреждения об опасности. Данные могут поступать с задержкой, сообщения могут быть неполными или неподтверждёнными. Отсутствие отметок не означает безопасность. Линия контроля территорий зависит от даты и методики источника.</p>
         </section>
+        <section style={{ border: '1px solid #665027', borderRadius: 14, padding: 18, background: '#15130e', marginTop: 24 }}>
+          <span style={{ color: '#e8c56b', fontSize: 12 }}>ИСТОЧНИК ЛИНИИ СОПРИКОСНОВЕНИЯ</span>
+          <h2 style={{ fontSize: 20, margin: '10px 0' }}>Z комитет — публичная карта</h2>
+          <p style={{ color: '#b8beca', lineHeight: 1.6 }}>Карта и оценки контроля территорий публикуются сторонним проектом. Данные могут запаздывать и отражают методику и позицию авторов. Сверяйте дату обновления и другие независимые источники.</p>
+          <a href="https://паблик.карта-сво.рф/free/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', border: '1px solid #e8c56b', borderRadius: 10, padding: '12px 16px', color: '#e8c56b', textDecoration: 'none' }}>Открыть карту Z комитета ↗</a>
+          <p style={{ fontSize: 13, color: '#969eaa', lineHeight: 1.6 }}>Линия фронта пока не импортирована в карту OSIRIS: доступный машиночитаемый слой и разрешение на повторное использование не подтверждены.</p>
+        </section>
         <UkraineLayers />
         <h2 style={{ fontSize: 21, margin: '30px 0 16px' }}>Все основные источники</h2>
         <div style={{ display: 'grid', gap: 12 }}>
