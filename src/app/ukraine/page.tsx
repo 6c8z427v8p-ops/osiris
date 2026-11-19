@@ -22,7 +22,7 @@ const frontlineSectors = [
 
 export default function UkraineConflictPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#06060c', color: '#f3f4f6', padding: 'max(24px, env(safe-area-inset-top)) 18px 48px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <main className="docs-root" style={{ minHeight: '100vh', background: '#06060c', color: '#f3f4f6', padding: 'max(24px, env(safe-area-inset-top)) 18px 48px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 840, margin: '0 auto' }}>
         <Link href="/" style={{ color: '#e8c56b', textDecoration: 'none' }}>← OSIRIS / Карта мира</Link>
         <p style={{ marginTop: 32, color: '#e8c56b', letterSpacing: 2, fontSize: 12 }}>РЕГИОНАЛЬНЫЙ МОНИТОРИНГ</p>
