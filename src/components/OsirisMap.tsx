@@ -390,7 +390,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       maxPitch: 85,
       transformRequest: (url: string) => {
         // Route all CARTO CDN requests through the internal Next.js proxy API
-        if (url.includes('cartocdn.com')) {
+        if (!directBasemapFallback && url.includes('cartocdn.com')) {
           const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
           return { url: `${baseUrl}/api/proxy-tiles?url=${encodeURIComponent(url)}` };
         }
@@ -428,7 +428,6 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
 
     // If Vercel cannot fetch the CARTO basemap, retry tile/style requests directly.
     // Keep the proxy for normal operation and switch only on a proxy failure.
-    let directBasemapFallback = false;
     map.on('error', (event) => {
       const message = String(event.error?.message || '');
       if (directBasemapFallback || !/proxy-tiles|Failed to fetch|HTTP 5\\d\\d|HTTP 403/i.test(message)) return;
