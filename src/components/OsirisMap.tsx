@@ -363,6 +363,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     if (!containerRef.current || mapRef.current) return;
     
     // Select basemap style
+    // A direct CARTO style URL is retained as a fallback if the Vercel tile proxy fails.
     const styleUrl = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
     const container = containerRef.current;
@@ -425,6 +426,16 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     }
     if (!map) return;
 
+    // If Vercel cannot fetch the CARTO basemap, retry tile/style requests directly.
+    // Keep the proxy for normal operation and switch only on a proxy failure.
+    let directBasemapFallback = false;
+    map.on('error', (event) => {
+      const message = String(event.error?.message || '');
+      if (directBasemapFallback || !/proxy-tiles|Failed to fetch|HTTP 5\\d\\d|HTTP 403/i.test(message)) return;
+      directBasemapFallback = true;
+      console.warn('[OSIRIS] Basemap proxy may be unavailable; retrying CARTO directly:', message);
+      map.setStyle(styleUrl, { transformStyle: (_previous, next) => next });
+    });
     map.on('load', () => {
       mapRef.current = map;
 
