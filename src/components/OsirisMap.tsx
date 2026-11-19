@@ -216,6 +216,15 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
   const alertPinsRef = useRef<AlertPinFeature[]>([]);
   const openAlertPinRef = useRef<((id: string) => void) | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapDiagnostics, setMapDiagnostics] = useState('Запуск карты…');
+  const [showMapDiagnostics, setShowMapDiagnostics] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (!mapReady) setShowMapDiagnostics(true);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [mapReady]);
+
 
   // Do not replay an earlier explicit zoom request after theme/retry remounts.
   const lastTerrainFocus = useRef(terrainFocus);
@@ -367,6 +376,19 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     const styleUrl = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
     const container = containerRef.current;
+    setMapDiagnostics('Создание карты MapLibre…');
+    try {
+      const testCanvas = document.createElement('canvas');
+      const gl = testCanvas.getContext('webgl2');
+      if (!gl) {
+        setMapDiagnostics('WebGL2 недоступен в этом браузере. Попробуйте открыть OSIRIS непосредственно в Safari.');
+        setShowMapDiagnostics(true);
+      }
+    } catch (error) {
+      setMapDiagnostics('Ошибка WebGL: ' + String(error));
+      setShowMapDiagnostics(true);
+    }
+
     // Start with direct CDN tiles; do not depend on a Vercel tile proxy.
     let directBasemapFallback = true;
     // Use MapLibre's bundled worker by default; a missing versioned vendor worker can leave iOS with a blank map.
@@ -431,6 +453,9 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     // If Vercel cannot fetch the CARTO basemap, retry tile/style requests directly.
     // Keep the proxy for normal operation and switch only on a proxy failure.
     map.on('error', (event) => {
+      const errorText = String(event.error?.message || 'Неизвестная ошибка карты');
+      setMapDiagnostics('Ошибка MapLibre: ' + errorText.slice(0, 240));
+      setShowMapDiagnostics(true);
       const message = String(event.error?.message || '');
       if (directBasemapFallback || !/proxy-tiles|Failed to fetch|HTTP 5\\d\\d|HTTP 403/i.test(message)) return;
       directBasemapFallback = true;
@@ -438,6 +463,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       map.setStyle(styleUrl, { transformStyle: (_previous, next) => next });
     });
     map.on('load', () => {
+      setMapDiagnostics('Карта загружена');
+      setShowMapDiagnostics(false);
       mapRef.current = map;
 
       /* Measure the container once the layout has settled. The constructor
@@ -3495,6 +3522,14 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
   return (
     <>
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+      {showMapDiagnostics && (
+        <div role="alert" className="absolute left-3 right-3 top-[28%] z-[1000] max-w-lg rounded-xl border border-amber-500/70 bg-[#10131e]/95 p-4 text-sm text-white shadow-2xl">
+          <div className="mb-2 font-bold text-amber-300">Диагностика карты OSIRIS</div>
+          <div className="break-words">{mapDiagnostics}</div>
+          <div className="mt-2 text-xs text-white/70">Версия диагностики: MAP-DIAG-1. Сделайте скриншот этого сообщения.</div>
+          <button type="button" onClick={() => setShowMapDiagnostics(false)} className="mt-3 rounded border border-white/30 px-3 py-2">Закрыть</button>
+        </div>
+      )}
       {mapReady && mapRef.current && (
         <CctvPreviews
           mapRef={mapRef}
