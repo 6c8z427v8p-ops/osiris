@@ -367,6 +367,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     const styleUrl = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
     const container = containerRef.current;
+    // Start with direct CDN tiles; do not depend on a Vercel tile proxy.
+    let directBasemapFallback = true;
     // Use MapLibre's bundled worker by default; a missing versioned vendor worker can leave iOS with a blank map.
     /* Open on the whole globe, turned to the viewer's side of it. The UTC
        offset is a free, instant stand-in for longitude (15° an hour), so the
