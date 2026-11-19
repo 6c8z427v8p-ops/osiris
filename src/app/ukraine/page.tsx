@@ -22,8 +22,8 @@ const frontlineSectors = [
 
 export default function UkraineConflictPage() {
   return (
-    <main className="docs-root" style={{ minHeight: '100vh', background: '#06060c', color: '#f3f4f6', padding: 'max(24px, env(safe-area-inset-top)) 18px 48px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 840, margin: '0 auto' }}>
+    <main className="docs-root" style={{ overflowY: "auto", touchAction: "pan-y", WebkitOverflowScrolling: "touch", minHeight: '100vh', background: '#06060c', color: '#f3f4f6', padding: 'max(24px, env(safe-area-inset-top)) 18px 48px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ maxWidth: 840, margin: '0 auto' }}><p style={{fontSize: 11, color: "#8e9aac"}}>OSIRIS RU · исправление прокрутки v2</p>
         <Link href="/" style={{ color: '#e8c56b', textDecoration: 'none' }}>← OSIRIS / Карта мира</Link>
         <p style={{ marginTop: 32, color: '#e8c56b', letterSpacing: 2, fontSize: 12 }}>РЕГИОНАЛЬНЫЙ МОНИТОРИНГ</p>
         <h1 style={{ fontSize: 'clamp(28px, 7vw, 48px)', lineHeight: 1.15, margin: '12px 0' }}>Украина — зона конфликта</h1>
